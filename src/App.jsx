@@ -34,7 +34,7 @@ export default function App() {
       </header>
       <aside className="left">
         <h2>XBotAI</h2>
-        <Link to="/" className="btn">New Chat</Link>
+        <Link to="/" onClick={() => setActiveId(null)} className="btn">New Chat</Link>
         <nav className="nav-links">
           <Link to="/history">Past Conversations</Link>
         </nav>

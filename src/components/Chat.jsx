@@ -5,10 +5,27 @@ import FeedbackModal from './FeedbackModal'
 function generateResponse(question) {
   if (!question) return "Sorry, Did not understand your query!"
   const q = question.trim().toLowerCase()
+  
+  // Check for exact matches first
   if (stubs.greetings[q]) return stubs.greetings[q]
   if (stubs.faqs[q]) return stubs.faqs[q]
-  // fallback: simple echo
-  if (q.includes('soul ai')) return 'Soul AI is an example assistant.'
+  
+  // Check for partial matches in greetings
+  for (const [key, value] of Object.entries(stubs.greetings)) {
+    if (q.includes(key) || key.includes(q)) return value
+  }
+  
+  // Check for partial matches in FAQs
+  for (const [key, value] of Object.entries(stubs.faqs)) {
+    if (q.includes(key) || key.includes(q)) return value
+  }
+  
+  // Fallback for common keywords
+  if (q.includes('restful') || q.includes('rest') || q.includes('api')) {
+    return stubs.faqs['restful apis']
+  }
+  if (q.includes('soul')) return 'Soul AI is an example assistant.'
+  
   return 'Sorry, Did not understand your query!'
 }
 
@@ -33,12 +50,41 @@ export default function Chat({ saveConversation, conversations, activeId }) {
       setMessages([])
       setRating(0)
       setNotes('')
+      conversationId.current = null  // Reset for new conversation
     }
   }, [activeId, conversations])
+
+  const conversationId = useRef(null)
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+
+  // Auto-save conversation when messages change (only when not viewing an existing conversation)
+  useEffect(() => {
+    if (messages.length > 0 && !activeId) {
+      if (!conversationId.current) {
+        conversationId.current = Date.now().toString()
+      }
+      const conv = {
+        id: conversationId.current,
+        title: messages.find((m) => m.type === 'user')?.text?.slice(0, 30) || 'Chat',
+        messages,
+        rating,
+        notes,
+      }
+      // Debounce saves to avoid too frequent updates
+      const timer = setTimeout(() => {
+        // Directly update localStorage to avoid infinite loops with saveConversation
+        const raw = localStorage.getItem('xbotai_conversations')
+        const all = raw ? JSON.parse(raw) : []
+        const others = all.filter((c) => c.id !== conv.id)
+        const updated = [conv, ...others]
+        localStorage.setItem('xbotai_conversations', JSON.stringify(updated))
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, activeId, rating, notes])
 
   function handleAsk(e) {
     e.preventDefault()
@@ -58,14 +104,16 @@ export default function Chat({ saveConversation, conversations, activeId }) {
   }
 
   function handleSave() {
-    const conv = {
-      id: Date.now().toString(),
-      title: messages.find((m) => m.type === 'user')?.text?.slice(0, 30) || 'Chat',
-      messages,
-      rating,
-      notes,
+    if (conversationId.current && messages.length > 0) {
+      const conv = {
+        id: conversationId.current,
+        title: messages.find((m) => m.type === 'user')?.text?.slice(0, 30) || 'Chat',
+        messages,
+        rating,
+        notes,
+      }
+      saveConversation(conv)
     }
-    saveConversation(conv)
     setShowFeedback(false)
   }
 
