@@ -1,0 +1,10 @@
+{
+  "greetings": {
+    "hi": "Hello! How can I help you today?",
+    "hello": "Hi there! Ask me anything about Soul AI."
+  },
+  "faqs": {
+    "what is soul ai": "Soul AI is a demo conversational assistant used for the XBotAI exercise.",
+    "who made you": "I was created as part of a frontend coding task."
+  }
+}
