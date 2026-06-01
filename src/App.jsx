@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import Chat from './components/Chat'
 import History from './components/History'
 import Sidebar from './components/Sidebar'
@@ -7,7 +7,6 @@ import Sidebar from './components/Sidebar'
 export default function App() {
   const [conversations, setConversations] = useState([])
   const [activeId, setActiveId] = useState(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
     const raw = localStorage.getItem('xbotai_conversations')
@@ -28,18 +27,16 @@ export default function App() {
     setActiveId(id)
   }
 
-  function startNew() {
-    setActiveId(null)
-    navigate('/')
-  }
-
   return (
     <div className="xbot-layout">
+      <header>
+        <h1>Bot AI</h1>
+      </header>
       <aside className="left">
         <h2>XBotAI</h2>
-        <button className="btn" onClick={startNew}>New Chat</button>
+        <Link to="/" className="btn">New Chat</Link>
         <nav className="nav-links">
-          <Link to="/history">Past Conversions</Link>
+          <Link to="/history">Past Conversations</Link>
         </nav>
         <Sidebar conversations={conversations} setActiveId={setActiveId} />
       </aside>

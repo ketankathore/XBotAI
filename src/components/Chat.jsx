@@ -99,7 +99,7 @@ export default function Chat({ saveConversation, conversations, activeId }) {
       <form className="chat-input" onSubmit={handleAsk}>
         <input
           aria-label="Message Bot AI"
-          placeholder="Message Bot AI…"
+          placeholder="Message Bot AI..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />

@@ -10,7 +10,7 @@ export default function History({ conversations }) {
 
   return (
     <div className="history">
-      <h2>Conversation History</h2>
+      <h2>Past Conversations</h2>
       <div className="filters">
         <label>Filter by rating: </label>
         <select value={filter} onChange={(e)=>setFilter(Number(e.target.value))}>
