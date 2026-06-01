@@ -78,7 +78,7 @@ export default function Chat({ saveConversation, conversations, activeId }) {
         </div>
       </div>
 
-      <div className="messages" ref={messagesRef}>
+      <div className="messages" ref={messagesRef} role="log" aria-live="polite" tabIndex={0}>
         {messages.map((m) => (
           <div key={m.id} className={`message ${m.type}`}>
             <div className="meta">
@@ -98,11 +98,12 @@ export default function Chat({ saveConversation, conversations, activeId }) {
 
       <form className="chat-input" onSubmit={handleAsk}>
         <input
+          aria-label="Message Bot AI"
           placeholder="Message Bot AI…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <button type="submit" className="btn primary">Ask</button>
+        <button type="submit" aria-label="Ask Soul AI" className="btn primary">Ask</button>
       </form>
 
       {showFeedback && (
