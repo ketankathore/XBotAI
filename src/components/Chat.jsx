@@ -6,30 +6,15 @@ function generateResponse(question) {
   if (!question) return "Sorry, Did not understand your query!"
   const q = question.trim().toLowerCase()
   
-  // Check for exact matches first
+  // Check for exact matches only
   if (stubs.greetings[q]) return stubs.greetings[q]
   if (stubs.faqs[q]) return stubs.faqs[q]
-  
-  // Check for partial matches in greetings
-  for (const [key, value] of Object.entries(stubs.greetings)) {
-    if (q.includes(key) || key.includes(q)) return value
-  }
-  
-  // Check for partial matches in FAQs
-  for (const [key, value] of Object.entries(stubs.faqs)) {
-    if (q.includes(key) || key.includes(q)) return value
-  }
-  
-  // Fallback for common keywords
-  if (q.includes('restful') || q.includes('rest') || q.includes('api')) {
-    return stubs.faqs['restful apis']
-  }
-  if (q.includes('soul')) return 'Soul AI is an example assistant.'
   
   return 'Sorry, Did not understand your query!'
 }
 
-export default function Chat({ saveConversation, conversations, activeId }) {
+export default function Chat({ saveConversation, conversations, activeId, autoSaveConversation }) {
+  const conversationId = useRef(null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [showFeedback, setShowFeedback] = useState(false)
@@ -54,8 +39,6 @@ export default function Chat({ saveConversation, conversations, activeId }) {
     }
   }, [activeId, conversations])
 
-  const conversationId = useRef(null)
-
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
@@ -75,16 +58,13 @@ export default function Chat({ saveConversation, conversations, activeId }) {
       }
       // Debounce saves to avoid too frequent updates
       const timer = setTimeout(() => {
-        // Directly update localStorage to avoid infinite loops with saveConversation
-        const raw = localStorage.getItem('xbotai_conversations')
-        const all = raw ? JSON.parse(raw) : []
-        const others = all.filter((c) => c.id !== conv.id)
-        const updated = [conv, ...others]
-        localStorage.setItem('xbotai_conversations', JSON.stringify(updated))
+        if (autoSaveConversation) {
+          autoSaveConversation(conv)
+        }
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [messages, activeId, rating, notes])
+  }, [messages, activeId, rating, notes, autoSaveConversation])
 
   function handleAsk(e) {
     e.preventDefault()
@@ -104,9 +84,9 @@ export default function Chat({ saveConversation, conversations, activeId }) {
   }
 
   function handleSave() {
-    if (conversationId.current && messages.length > 0) {
+    if (messages.length > 0) {
       const conv = {
-        id: conversationId.current,
+        id: conversationId.current || Date.now().toString(),
         title: messages.find((m) => m.type === 'user')?.text?.slice(0, 30) || 'Chat',
         messages,
         rating,

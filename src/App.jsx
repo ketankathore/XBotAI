@@ -27,6 +27,16 @@ export default function App() {
     setActiveId(id)
   }
 
+  function autoSaveConversation(conv) {
+    const id = conv.id || Date.now().toString()
+    const updated = { ...conv, id }
+    setConversations((prev) => {
+      const others = prev.filter((c) => c.id !== id)
+      return [updated, ...others]
+    })
+    // Don't set activeId for auto-save
+  }
+
   return (
     <div className="xbot-layout">
       <header>
@@ -43,7 +53,7 @@ export default function App() {
 
       <main className="main">
         <Routes>
-          <Route path="/" element={<Chat saveConversation={saveConversation} conversations={conversations} activeId={activeId} />} />
+          <Route path="/" element={<Chat saveConversation={saveConversation} autoSaveConversation={autoSaveConversation} conversations={conversations} activeId={activeId} />} />
           <Route path="/history" element={<History conversations={conversations} />} />
         </Routes>
       </main>
