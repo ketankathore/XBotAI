@@ -6,9 +6,32 @@ function generateResponse(question) {
   if (!question) return "Sorry, Did not understand your query!"
   const q = question.trim().toLowerCase()
   
-  // Check for exact matches only
+  // Check for exact matches first
   if (stubs.greetings[q]) return stubs.greetings[q]
   if (stubs.faqs[q]) return stubs.faqs[q]
+  
+  // Check for partial matches - if question contains a key or key is in question
+  for (const key in stubs.greetings) {
+    if (q.includes(key) || key.includes(q)) {
+      return stubs.greetings[key]
+    }
+  }
+  
+  for (const key in stubs.faqs) {
+    if (q.includes(key) || key.includes(q)) {
+      return stubs.faqs[key]
+    }
+  }
+  
+  // Extract key terms and check for keyword matching
+  const terms = q.split(/\s+/).filter(t => t.length > 3)
+  for (const key in stubs.faqs) {
+    const keyTerms = key.split(/\s+/)
+    const matchCount = terms.filter(t => keyTerms.some(kt => kt.includes(t) || t.includes(kt))).length
+    if (matchCount > 0) {
+      return stubs.faqs[key]
+    }
+  }
   
   return 'Sorry, Did not understand your query!'
 }
@@ -43,12 +66,9 @@ export default function Chat({ saveConversation, conversations, activeId, autoSa
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  // Auto-save conversation when messages change (only when not viewing an existing conversation)
+  // Auto-save conversation when rating or notes change
   useEffect(() => {
-    if (messages.length > 0 && !activeId) {
-      if (!conversationId.current) {
-        conversationId.current = Date.now().toString()
-      }
+    if (messages.length > 0 && !activeId && conversationId.current) {
       const conv = {
         id: conversationId.current,
         title: messages.find((m) => m.type === 'user')?.text?.slice(0, 30) || 'Chat',
@@ -56,27 +76,60 @@ export default function Chat({ saveConversation, conversations, activeId, autoSa
         rating,
         notes,
       }
-      // Debounce saves to avoid too frequent updates
-      const timer = setTimeout(() => {
-        if (autoSaveConversation) {
-          autoSaveConversation(conv)
-        }
-      }, 500)
-      return () => clearTimeout(timer)
+      if (autoSaveConversation) {
+        autoSaveConversation(conv)
+      }
     }
-  }, [messages, activeId, rating, notes, autoSaveConversation])
+  }, [rating, notes, activeId, messages, autoSaveConversation])
 
   function handleAsk(e) {
     e.preventDefault()
     const question = input.trim()
     if (!question) return
+    
+    // Create unique conversation ID if not exists
+    if (!conversationId.current) {
+      conversationId.current = Date.now().toString()
+    }
+    
     const userMsg = { id: Date.now() + '-u', type: 'user', text: question }
-    setMessages((m) => [...m, userMsg])
+    setMessages((prevMessages) => {
+      const updatedMessages = [...prevMessages, userMsg]
+      // Auto-save immediately after user message
+      const conv = {
+        id: conversationId.current,
+        title: question.slice(0, 30) || 'Chat',
+        messages: updatedMessages,
+        rating,
+        notes,
+      }
+      if (autoSaveConversation) {
+        autoSaveConversation(conv)
+      }
+      return updatedMessages
+    })
     setInput('')
+    
     // simulate AI reply
     const reply = generateResponse(question)
     const aiMsg = { id: Date.now() + '-a', type: 'ai', text: reply }
-    setTimeout(() => setMessages((m) => [...m, aiMsg]), 250)
+    setTimeout(() => {
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, aiMsg]
+        // Auto-save immediately after AI message
+        const conv = {
+          id: conversationId.current,
+          title: question.slice(0, 30) || 'Chat',
+          messages: updatedMessages,
+          rating,
+          notes,
+        }
+        if (autoSaveConversation) {
+          autoSaveConversation(conv)
+        }
+        return updatedMessages
+      })
+    }, 250)
   }
 
   function toggleLike(id, val) {
