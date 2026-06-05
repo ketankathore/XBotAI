@@ -43,12 +43,13 @@ export default function Chat({ saveConversation, conversations, activeId, autoSa
         setMessages(conv.messages || [])
         setRating(conv.rating || 0)
         setNotes(conv.notes || '')
+        conversationId.current = null // Clear current conversation ID when viewing a saved one
       }
-    } else {
+    } else if (!conversationId.current) {
+      // Only clear messages if not actively chatting (conversationId.current is set while chatting)
       setMessages([])
       setRating(0)
       setNotes('')
-      conversationId.current = null  // Reset for new conversation
     }
   }, [activeId, conversations])
 
