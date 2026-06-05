@@ -10,25 +10,15 @@ function generateResponse(question) {
   if (stubs.greetings[q]) return stubs.greetings[q]
   if (stubs.faqs[q]) return stubs.faqs[q]
   
-  // Check for partial matches - if question contains a key or key is in question
+  // Check for substring match - if question contains the key
   for (const key in stubs.greetings) {
-    if (q.includes(key) || key.includes(q)) {
+    if (q.includes(key)) {
       return stubs.greetings[key]
     }
   }
   
   for (const key in stubs.faqs) {
-    if (q.includes(key) || key.includes(q)) {
-      return stubs.faqs[key]
-    }
-  }
-  
-  // Extract key terms and check for keyword matching
-  const terms = q.split(/\s+/).filter(t => t.length > 3)
-  for (const key in stubs.faqs) {
-    const keyTerms = key.split(/\s+/)
-    const matchCount = terms.filter(t => keyTerms.some(kt => kt.includes(t) || t.includes(kt))).length
-    if (matchCount > 0) {
+    if (q.includes(key)) {
       return stubs.faqs[key]
     }
   }
